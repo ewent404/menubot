@@ -24,7 +24,7 @@ export default async function handler(request, response) {
     return;
   }
 
-  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
   if (!token) {
     response.status(500).json({ ok: false, error: "Missing TELEGRAM_BOT_TOKEN" });
     return;
@@ -32,8 +32,8 @@ export default async function handler(request, response) {
 
   try {
     await handleTelegramUpdate(request.body, {
-      miniAppUrl: process.env.MINI_APP_URL,
-      ownerChatId: process.env.OWNER_CHAT_ID,
+      miniAppUrl: process.env.MINI_APP_URL?.trim(),
+      ownerChatId: process.env.OWNER_CHAT_ID?.trim(),
       sendMessage: (chatId, text, options = {}) =>
         callTelegram(token, "sendMessage", {
           chat_id: chatId,

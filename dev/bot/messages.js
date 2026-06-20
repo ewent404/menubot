@@ -43,13 +43,14 @@ function createMenuHelp() {
 
 export function createMenuKeyboard(miniAppUrl) {
   if (!miniAppUrl) return undefined;
+  const url = miniAppUrl.trim();
 
   return {
     keyboard: [
       [
         {
           text: "Open Menu",
-          web_app: { url: miniAppUrl },
+          web_app: { url },
         },
       ],
     ],

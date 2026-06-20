@@ -17,7 +17,7 @@ function loadDotEnv() {
 }
 
 function requireEnv(name) {
-  const value = process.env[name];
+  const value = process.env[name]?.trim();
   if (!value) {
     console.error(`Missing ${name}. Add it to .env or your shell environment.`);
     process.exit(1);

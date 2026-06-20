@@ -73,7 +73,7 @@ test("bot can format orders sent from Telegram Mini App data", () => {
 });
 
 test("bot menu keyboard opens the mini app when a URL is configured", () => {
-  const keyboard = createMenuKeyboard("https://example.com/bigbunny");
+  const keyboard = createMenuKeyboard("https://example.com/bigbunny\n");
 
   assert.equal(keyboard.keyboard[0][0].text, "Open Menu");
   assert.equal(keyboard.keyboard[0][0].web_app.url, "https://example.com/bigbunny");

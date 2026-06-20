@@ -20,9 +20,9 @@ function loadDotEnv() {
 
 loadDotEnv();
 
-const token = process.env.TELEGRAM_BOT_TOKEN;
-const ownerChatId = process.env.OWNER_CHAT_ID;
-const miniAppUrl = process.env.MINI_APP_URL;
+const token = process.env.TELEGRAM_BOT_TOKEN?.trim();
+const ownerChatId = process.env.OWNER_CHAT_ID?.trim();
+const miniAppUrl = process.env.MINI_APP_URL?.trim();
 
 if (!token) {
   console.error("Missing TELEGRAM_BOT_TOKEN. Create dev/.env from dev/.env.example first.");
