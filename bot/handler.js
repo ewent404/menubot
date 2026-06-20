@@ -24,7 +24,11 @@ export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, 
   });
 
   if (shouldForwardToOwner({ ownerChatId, text, webAppData })) {
-    await sendMessage(ownerChatId, createOwnerForwardText({ message: webAppData ? reply : text, customerName }));
+    try {
+      await sendMessage(ownerChatId, createOwnerForwardText({ message: webAppData ? reply : text, customerName }));
+    } catch (error) {
+      log(`Owner forward failed: ${error.message}`);
+    }
   }
 }
 

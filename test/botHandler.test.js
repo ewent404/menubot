@@ -60,3 +60,40 @@ test("telegram handler forwards mini app orders to the owner chat", async () => 
   assert.match(sent[1].text, /Customer: Sophea/);
   assert.match(sent[1].text, /Brownie Tube/);
 });
+
+test("telegram handler keeps customer order working if owner forward fails", async () => {
+  const sent = [];
+  const logs = [];
+  const miniAppOrder = JSON.stringify({
+    type: "order",
+    itemName: "Brownie Tube",
+    sizeLabel: "Tube",
+    detail: "15-20 pcs · 6 cm x 16 cm",
+    quantity: 1,
+    totalText: "$4.50",
+  });
+
+  await handleTelegramUpdate(
+    {
+      message: {
+        chat: { id: 202 },
+        from: { first_name: "Sophea" },
+        web_app_data: { data: miniAppOrder },
+      },
+    },
+    {
+      miniAppUrl: "https://bigbunny.example",
+      ownerChatId: "999",
+      sendMessage: async (chatId, text, options) => {
+        if (chatId === "999") throw new Error("chat not found");
+        sent.push({ chatId, text, options });
+      },
+      log: (message) => logs.push(message),
+    },
+  );
+
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].chatId, 202);
+  assert.match(sent[0].text, /Order received from Mini App/);
+  assert.match(logs.join("\n"), /Owner forward failed/);
+});

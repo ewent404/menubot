@@ -433,7 +433,8 @@ async function handleOrder(orderLink, event) {
     event.preventDefault();
     miniApp.sendData(miniAppOrder);
     const status = checkoutEl.querySelector(".order-status");
-    if (status) status.textContent = "Order sent to bot. Confirm details in Telegram.";
+    if (status) status.textContent = "Order sent. Returning to Telegram chat...";
+    miniApp.close?.();
     return;
   }
 
