@@ -81,8 +81,16 @@ function selectedPhoto() {
   };
 }
 
-function setState(patch) {
+function setState(patch, options = {}) {
   Object.assign(state, patch);
+  if (options.renderMode === "checkout") {
+    renderCheckout();
+    return;
+  }
+  if (options.renderMode === "ar-sheet") {
+    renderArSheet();
+    return;
+  }
   render();
 }
 
@@ -129,7 +137,7 @@ function renderDetails() {
   `;
 
   photoHeroEl.innerHTML = `
-    <img class="hero-photo" src="${photo.src}" alt="${photo.alt}" />
+    <img class="hero-photo" src="${photo.src}" alt="${photo.alt}" decoding="async" fetchpriority="high" />
     <div class="photo-strip" aria-label="Product photos">
       ${item.photos
         .map(
@@ -167,6 +175,14 @@ function renderDetails() {
     </button>
   `;
 
+  renderCheckout();
+  renderArSheet();
+}
+
+function renderCheckout() {
+  const item = selectedItem();
+  const size = selectedSize();
+
   checkoutEl.innerHTML = `
     <div>
       <strong>${formatMoney(size.price * state.quantity)}</strong>
@@ -180,8 +196,6 @@ function renderDetails() {
     <a class="order-button" href="${isTelegramMiniApp() ? "#" : createTelegramOrderLink({ item, size, quantity: state.quantity })}" data-order-text="${encodeURIComponent(createOrderText({ item, size, quantity: state.quantity }))}" data-mini-app-order="${encodeURIComponent(createMiniAppOrderData({ item, size, quantity: state.quantity }))}" target="_blank" rel="noreferrer">${isTelegramMiniApp() ? "Send order to bot" : "Order in Telegram"}</a>
     <p class="order-status" aria-live="polite"></p>
   `;
-
-  renderArSheet();
 }
 
 function renderArSheet() {
@@ -411,9 +425,11 @@ function bindEvents() {
     if (size) setState({ sizeIndex: Number(size.dataset.size) });
     const photo = event.target.closest("[data-photo]");
     if (photo) setState({ photoIndex: Number(photo.dataset.photo) });
-    if (qty) setState({ quantity: Math.max(1, state.quantity + Number(qty.dataset.qty)) });
-    if (openAr) setState({ arOpen: true });
-    if (closeAr) setState({ arOpen: false });
+    if (qty) {
+      setState({ quantity: Math.max(1, state.quantity + Number(qty.dataset.qty)) }, { renderMode: "checkout" });
+    }
+    if (openAr) setState({ arOpen: true }, { renderMode: "ar-sheet" });
+    if (closeAr) setState({ arOpen: false }, { renderMode: "ar-sheet" });
     if (orderLink) handleOrder(orderLink, event);
   });
 
@@ -464,8 +480,28 @@ function render() {
   renderDetails();
 }
 
+function preloadProductPhotos() {
+  const preload = () => {
+    for (const item of menuItems) {
+      for (const photo of item.photos ?? []) {
+        const image = new Image();
+        image.decoding = "async";
+        image.src = photo.src;
+      }
+    }
+  };
+
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(preload, { timeout: 2000 });
+    return;
+  }
+
+  window.setTimeout(preload, 300);
+}
+
 bindEvents();
 render();
+preloadProductPhotos();
 
 telegramWebApp()?.ready();
 telegramWebApp()?.expand();
@@ -476,7 +512,7 @@ resolveArAvailability({
   telegramMiniApp: isTelegramMiniApp(),
   userAgent: navigator.userAgent,
 }).then((arAvailability) => {
-  setState({ arAvailability });
+  setState({ arAvailability }, { renderMode: "ar-sheet" });
 });
 
 window.addEventListener("beforeunload", () => {
