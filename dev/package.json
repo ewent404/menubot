@@ -1,0 +1,18 @@
+{
+  "name": "telegram-3d-cafe-menu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "bot": "node bot/run.js",
+    "bot:setup-webhook": "node bot/setup-webhook.js",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "three": "^0.166.1",
+    "vite": "^5.4.19"
+  },
+  "devDependencies": {}
+}
