@@ -4,6 +4,7 @@ import { categories, menuItems } from "./menuData.js";
 import { createMiniAppOrderData, createOrderText, createTelegramOrderLink } from "./orderLink.js";
 import { previewFeatures } from "./previewConfig.js";
 import { formatMoney, formatSizeLabel, getScaleForSize } from "./sizeMath.js";
+import { isTelegramMiniApp, telegramWebApp } from "./telegramMiniApp.js";
 import "./styles.css";
 
 const state = {
@@ -17,14 +18,6 @@ const state = {
 };
 
 const app = document.querySelector("#app");
-
-function telegramWebApp() {
-  return window.Telegram?.WebApp;
-}
-
-function isTelegramMiniApp() {
-  return Boolean(telegramWebApp()?.initData);
-}
 
 app.innerHTML = `
   <main class="phone-shell ${isTelegramMiniApp() ? "telegram-mini-app" : ""}">
@@ -436,7 +429,7 @@ async function handleOrder(orderLink, event) {
   const miniApp = telegramWebApp();
   const miniAppOrder = decodeURIComponent(orderLink.dataset.miniAppOrder ?? "");
 
-  if (miniApp?.initData && miniAppOrder) {
+  if (isTelegramMiniApp() && miniApp?.sendData && miniAppOrder) {
     event.preventDefault();
     miniApp.sendData(miniAppOrder);
     const status = checkoutEl.querySelector(".order-status");
@@ -479,6 +472,8 @@ telegramWebApp()?.expand();
 resolveArAvailability({
   isSecureContext: window.isSecureContext,
   xr: navigator.xr,
+  telegramMiniApp: isTelegramMiniApp(),
+  userAgent: navigator.userAgent,
 }).then((arAvailability) => {
   setState({ arAvailability });
 });

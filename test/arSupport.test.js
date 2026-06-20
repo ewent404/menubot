@@ -41,3 +41,20 @@ test("AR status message tells users what to do next", () => {
     "Camera AR is not available here. You can still view the product photo and choose a size before ordering.",
   );
 });
+
+test("AR explains the Telegram iPhone WebView limitation", async () => {
+  const result = await resolveArAvailability({
+    isSecureContext: true,
+    telegramMiniApp: true,
+    userAgent: "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
+  });
+
+  assert.deepEqual(result, {
+    supported: false,
+    reason: "telegram-ios-webview",
+  });
+  assert.equal(
+    getArStatusMessage(result),
+    "Telegram on iPhone does not allow this camera AR mode. Use the product photos and real size details here, or try AR from a supported Android Chrome browser.",
+  );
+});
