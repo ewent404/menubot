@@ -33,5 +33,5 @@ test("telegram mini app order returns the customer to chat", async () => {
   const mainSource = await readFile("src/main.js", "utf8");
 
   assert.match(mainSource, /miniApp\.sendData\(miniAppOrder\)/);
-  assert.match(mainSource, /miniApp\.close\?\.\(\)/);
+  assert.match(mainSource, /window\.setTimeout\(\(\) => miniApp\.close\?\.\(\), 650\)/);
 });

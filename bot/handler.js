@@ -14,7 +14,7 @@ export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, 
   const chatId = message.chat.id;
   const text = message.text ?? "";
   const webAppData = message.web_app_data?.data;
-  const reply = createBotReply(text, { webAppData });
+  const reply = createBotReply(text, { webAppData, chatId });
   const customerName = customerNameFrom(message);
 
   log(`Message from ${customerName || "Telegram user"} (${chatId})`);

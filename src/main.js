@@ -63,6 +63,8 @@ let animationFrame;
 let THREE;
 let ARButton;
 let arRuntimePromise;
+let photoRenderToken = 0;
+const photoPreloadPromises = new Map();
 
 function selectedItem() {
   return menuItems.find((item) => item.id === state.itemId) ?? menuItems[0];
@@ -114,7 +116,7 @@ function renderProducts() {
       return `
         <button class="product-card ${item.id === state.itemId ? "active" : ""}" data-item="${item.id}" type="button">
           <span class="product-thumb-frame">
-            <img class="product-thumb" src="${item.photo}" alt="${item.photoAlt}" loading="lazy" />
+            <img class="product-thumb" src="${item.photo}" alt="${item.photoAlt}" loading="eager" decoding="async" />
           </span>
           <span class="product-card-copy">
             <strong>${item.name}</strong>
@@ -129,28 +131,13 @@ function renderProducts() {
 function renderDetails() {
   const item = selectedItem();
   const size = selectedSize();
-  const photo = selectedPhoto();
 
   detailsCopyEl.innerHTML = `
     <h2>${item.name}</h2>
     <p>${item.description}</p>
   `;
 
-  photoHeroEl.innerHTML = `
-    <img class="hero-photo" src="${photo.src}" alt="${photo.alt}" decoding="async" fetchpriority="high" />
-    <div class="photo-strip" aria-label="Product photos">
-      ${item.photos
-        .map(
-          (option, index) => `
-            <button class="photo-thumb ${index === state.photoIndex ? "active" : ""}" data-photo="${index}" type="button" aria-label="Show photo ${index + 1}">
-              <img src="${option.src}" alt="" />
-            </button>
-          `,
-        )
-        .join("")}
-    </div>
-  `;
-
+  renderPhotoHero();
   sizePanelEl.innerHTML = `
     <h3>Choose size</h3>
     <div class="size-options">
@@ -177,6 +164,51 @@ function renderDetails() {
 
   renderCheckout();
   renderArSheet();
+}
+
+async function renderPhotoHero() {
+  const item = selectedItem();
+  const photo = selectedPhoto();
+  const token = (photoRenderToken += 1);
+  const existingPhoto = photoHeroEl.querySelector(".hero-photo");
+
+  if (!existingPhoto) {
+    photoHeroEl.innerHTML = `
+      <img class="hero-photo" src="${photo.src}" alt="${photo.alt}" decoding="async" fetchpriority="high" />
+      <div class="photo-strip" aria-label="Product photos"></div>
+    `;
+  }
+
+  renderPhotoStrip(item);
+
+  const heroPhoto = photoHeroEl.querySelector(".hero-photo");
+  if (!heroPhoto || heroPhoto.getAttribute("src") === photo.src) {
+    if (heroPhoto) heroPhoto.alt = photo.alt;
+    return;
+  }
+
+  photoHeroEl.classList.add("is-loading-next-photo");
+  await preloadImage(photo.src, { fetchPriority: "high" });
+  if (token !== photoRenderToken) return;
+
+  heroPhoto.src = photo.src;
+  heroPhoto.alt = photo.alt;
+  photoHeroEl.classList.remove("is-loading-next-photo");
+}
+
+function renderPhotoStrip(item) {
+  const strip = photoHeroEl.querySelector(".photo-strip");
+  if (!strip) return;
+
+  strip.innerHTML = item.photos
+    .map(
+      (option, index) => `
+        <button class="photo-thumb ${index === state.photoIndex ? "active" : ""}" data-photo="${index}" type="button" aria-label="Show photo ${index + 1}">
+          <img src="${option.src}" alt="" loading="eager" decoding="async" />
+        </button>
+      `,
+    )
+    .join("");
 }
 
 function renderCheckout() {
@@ -418,10 +450,14 @@ function bindEvents() {
     if (category) {
       const nextCategory = category.dataset.category;
       const firstItem = menuItems.find((menuItem) => menuItem.category === nextCategory);
+      preloadItemPhotos(firstItem.id);
       setState({ categoryId: nextCategory, itemId: firstItem.id, sizeIndex: 0, photoIndex: 0 });
     }
 
-    if (item) setState({ itemId: item.dataset.item, sizeIndex: 0, photoIndex: 0 });
+    if (item) {
+      preloadItemPhotos(item.dataset.item);
+      setState({ itemId: item.dataset.item, sizeIndex: 0, photoIndex: 0 });
+    }
     if (size) setState({ sizeIndex: Number(size.dataset.size) });
     const photo = event.target.closest("[data-photo]");
     if (photo) setState({ photoIndex: Number(photo.dataset.photo) });
@@ -450,7 +486,7 @@ async function handleOrder(orderLink, event) {
     miniApp.sendData(miniAppOrder);
     const status = checkoutEl.querySelector(".order-status");
     if (status) status.textContent = "Order sent. Returning to Telegram chat...";
-    miniApp.close?.();
+    window.setTimeout(() => miniApp.close?.(), 650);
     return;
   }
 
@@ -483,11 +519,7 @@ function render() {
 function preloadProductPhotos() {
   const preload = () => {
     for (const item of menuItems) {
-      for (const photo of item.photos ?? []) {
-        const image = new Image();
-        image.decoding = "async";
-        image.src = photo.src;
-      }
+      preloadItemPhotos(item.id);
     }
   };
 
@@ -499,7 +531,35 @@ function preloadProductPhotos() {
   window.setTimeout(preload, 300);
 }
 
+function preloadItemPhotos(itemId) {
+  const item = menuItems.find((menuItem) => menuItem.id === itemId);
+  if (!item) return;
+
+  for (const photo of item.photos ?? []) {
+    preloadImage(photo.src);
+  }
+}
+
+function preloadImage(src, { fetchPriority = "auto" } = {}) {
+  if (photoPreloadPromises.has(src)) return photoPreloadPromises.get(src);
+
+  const promise = new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.loading = "eager";
+    if ("fetchPriority" in image) image.fetchPriority = fetchPriority;
+    image.onload = () => resolve(src);
+    image.onerror = () => resolve(src);
+    image.src = src;
+    if (image.decode) image.decode().then(() => resolve(src)).catch(() => resolve(src));
+  });
+
+  photoPreloadPromises.set(src, promise);
+  return promise;
+}
+
 bindEvents();
+preloadItemPhotos(state.itemId);
 render();
 preloadProductPhotos();
 

@@ -82,10 +82,17 @@ export function createMiniAppOrderReply(data) {
   ].join("\n");
 }
 
-export function createBotReply(text = "", { webAppData } = {}) {
+export function createBotReply(text = "", { webAppData, chatId } = {}) {
   if (webAppData) return createMiniAppOrderReply(webAppData);
 
   const trimmed = text.trim();
+
+  if (trimmed === "/chatid" || trimmed.startsWith("/chatid@")) {
+    return [
+      `Chat ID: ${chatId}`,
+      "Use this value as OWNER_CHAT_ID to send BigBunny order notifications to this chat.",
+    ].join("\n");
+  }
 
   if (trimmed === "/help" || trimmed === "/menu") {
     return createMenuHelp();

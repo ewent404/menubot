@@ -78,3 +78,11 @@ test("bot menu keyboard opens the mini app when a URL is configured", () => {
   assert.equal(keyboard.keyboard[0][0].text, "Open Menu");
   assert.equal(keyboard.keyboard[0][0].web_app.url, "https://example.com/bigbunny");
 });
+
+test("bot can show the current chat id for group order setup", () => {
+  const reply = createBotReply("/chatid", { chatId: -1001234567890 });
+
+  assert.match(reply, /Chat ID:/);
+  assert.match(reply, /-1001234567890/);
+  assert.match(reply, /OWNER_CHAT_ID/);
+});
