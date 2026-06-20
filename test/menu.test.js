@@ -26,12 +26,12 @@ test("menu items expose size choices with prices and real dimensions", () => {
 
 test("every menu item has at least two local product photos", () => {
   for (const item of menuItems) {
-    assert.match(item.photo, /^\.\/products\/[a-z0-9-]+\.png$/);
+    assert.match(item.photo, /^\.\/products\/[a-z0-9-]+\.webp$/);
     assert.equal(item.photoAlt.length > 0, true);
     assert.equal(Array.isArray(item.photos), true);
     assert.equal(item.photos.length >= 2, true);
     for (const photo of item.photos) {
-      assert.match(photo.src, /^\.\/products\/[a-z0-9-]+(?:-\d+)?\.png$/);
+      assert.match(photo.src, /^\.\/products\/[a-z0-9-]+(?:-\d+)?\.webp$/);
       assert.equal(photo.alt.length > 0, true);
     }
   }

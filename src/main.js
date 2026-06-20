@@ -1,6 +1,3 @@
-import * as THREE from "three";
-import { ARButton } from "three/examples/jsm/webxr/ARButton.js";
-
 import { getArStatusMessage, resolveArAvailability } from "./arSupport.js";
 import { renderBrandLockup } from "./brand.js";
 import { categories, menuItems } from "./menuData.js";
@@ -70,6 +67,9 @@ let camera;
 let renderer;
 let productGroup;
 let animationFrame;
+let THREE;
+let ARButton;
+let arRuntimePromise;
 
 function selectedItem() {
   return menuItems.find((item) => item.id === state.itemId) ?? menuItems[0];
@@ -222,14 +222,32 @@ function renderArSheet() {
   }
 }
 
-function mountArButton() {
+async function loadArRuntime() {
+  if (!arRuntimePromise) {
+    arRuntimePromise = Promise.all([
+      import("three"),
+      import("three/examples/jsm/webxr/ARButton.js"),
+    ]).then(([threeModule, arButtonModule]) => {
+      THREE = threeModule;
+      ARButton = arButtonModule.ARButton;
+    });
+  }
+
+  await arRuntimePromise;
+}
+
+async function mountArButton() {
   const slot = arSheetEl.querySelector(".ar-button-slot");
-  if (!slot || !renderer) return;
+  if (!slot) return;
 
   if (!state.arAvailability.supported) {
     slot.innerHTML = `<button class="ar-disabled-button" type="button" disabled>Camera AR not available here</button>`;
     return;
   }
+
+  slot.innerHTML = `<button class="ar-disabled-button" type="button" disabled>Loading AR...</button>`;
+  await initThree();
+  if (!renderer) return;
 
   renderer.xr.enabled = true;
   const arButton = ARButton.createButton(renderer, {
@@ -241,7 +259,11 @@ function mountArButton() {
   slot.replaceChildren(arButton);
 }
 
-function initThree() {
+async function initThree() {
+  if (renderer) return;
+
+  await loadArRuntime();
+
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
   camera.position.set(0, 3.2, 7);
@@ -448,7 +470,6 @@ function render() {
   renderDetails();
 }
 
-initThree();
 bindEvents();
 render();
 
@@ -462,4 +483,6 @@ resolveArAvailability({
   setState({ arAvailability });
 });
 
-window.addEventListener("beforeunload", () => cancelAnimationFrame(animationFrame));
+window.addEventListener("beforeunload", () => {
+  if (animationFrame) cancelAnimationFrame(animationFrame);
+});

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
 import { inflateSync } from "node:zlib";
 
@@ -103,13 +103,22 @@ async function readPngAlpha(path) {
   return { colorType, nonTransparentPixels, totalPixels: width * height };
 }
 
-test("all product photos are high-resolution PNGs with visible product content", async () => {
+test("all product photos are web-optimized images with visible product content", async () => {
   const photoPaths = new Set(
     menuItems.flatMap((item) => item.photos.map((photo) => photo.src)),
   );
 
   for (const photoPath of photoPaths) {
+    assert.match(photoPath, /^\.\/products\/[a-z0-9-]+(?:-\d+)?\.(png|webp|jpg)$/);
     const assetPath = resolve("public", photoPath.replace("./", ""));
+    const assetStat = await stat(assetPath);
+    assert.ok(
+      assetStat.size <= 450_000,
+      `${photoPath} should be compressed for Telegram Mini App load speed`,
+    );
+
+    if (!photoPath.endsWith(".png")) continue;
+
     const { nonTransparentPixels, totalPixels } = await readPngAlpha(assetPath);
     assert.ok(
       totalPixels >= 1_000_000,

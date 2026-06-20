@@ -13,15 +13,15 @@ export const menuItems = [
     shape: "cup",
     color: "#4b2419",
     accent: "#b98257",
-    photo: "./products/brownie-tube.png",
+    photo: "./products/brownie-tube.webp",
     photoAlt: "Brownie bites packed in paper cups",
     photos: [
       {
-        src: "./products/brownie-tube.png",
+        src: "./products/brownie-tube.webp",
         alt: "Brownie bites packed in paper cups",
       },
       {
-        src: "./products/brownie-tube-2.png",
+        src: "./products/brownie-tube-2.webp",
         alt: "Brownie bites with almond topping in paper cups",
       },
     ],
@@ -43,15 +43,15 @@ export const menuItems = [
     shape: "box",
     color: "#c88d4c",
     accent: "#5a3422",
-    photo: "./products/banana-bread.png",
+    photo: "./products/banana-bread.webp",
     photoAlt: "Banana bread with chocolate chips and almond topping",
     photos: [
       {
-        src: "./products/banana-bread.png",
+        src: "./products/banana-bread.webp",
         alt: "Banana bread with chocolate chips and almond topping in a box",
       },
       {
-        src: "./products/banana-bread-2.png",
+        src: "./products/banana-bread-2.webp",
         alt: "Banana bread slices with chocolate chips and almonds",
       },
     ],
@@ -78,15 +78,15 @@ export const menuItems = [
     shape: "cookie",
     color: "#7a3f2a",
     accent: "#2d1710",
-    photo: "./products/chocolate-cookie.png",
+    photo: "./products/chocolate-cookie.webp",
     photoAlt: "Chocolate cookies with soft cracked tops",
     photos: [
       {
-        src: "./products/chocolate-cookie.png",
+        src: "./products/chocolate-cookie.webp",
         alt: "Chocolate cookies with soft cracked tops",
       },
       {
-        src: "./products/chocolate-cookie-2.png",
+        src: "./products/chocolate-cookie-2.webp",
         alt: "Broken chocolate cookies showing a soft center",
       },
     ],
@@ -113,15 +113,15 @@ export const menuItems = [
     shape: "cookie",
     color: "#85a857",
     accent: "#31461f",
-    photo: "./products/matcha-cookie.png",
+    photo: "./products/matcha-cookie.webp",
     photoAlt: "Matcha cookie with white chocolate chips",
     photos: [
       {
-        src: "./products/matcha-cookie.png",
+        src: "./products/matcha-cookie.webp",
         alt: "Matcha cookie with white chocolate chips",
       },
       {
-        src: "./products/matcha-cookie-2.png",
+        src: "./products/matcha-cookie-2.webp",
         alt: "Broken matcha cookie showing soft green center",
       },
     ],
@@ -148,15 +148,15 @@ export const menuItems = [
     shape: "cookie",
     color: "#a72f3d",
     accent: "#fff1d7",
-    photo: "./products/red-velvet-cookie.png",
+    photo: "./products/red-velvet-cookie.webp",
     photoAlt: "Red velvet cookie with white chocolate chips",
     photos: [
       {
-        src: "./products/red-velvet-cookie.png",
+        src: "./products/red-velvet-cookie.webp",
         alt: "Red velvet cookie with white chocolate chips",
       },
       {
-        src: "./products/red-velvet-cookie-2.png",
+        src: "./products/red-velvet-cookie-2.webp",
         alt: "Broken red velvet cookie showing soft center",
       },
     ],
@@ -183,15 +183,15 @@ export const menuItems = [
     shape: "box",
     color: "#f0c979",
     accent: "#fff3c8",
-    photo: "./products/butter-tteok.png",
+    photo: "./products/butter-tteok.webp",
     photoAlt: "Butter tteok pieces in a bakery tray",
     photos: [
       {
-        src: "./products/butter-tteok.png",
+        src: "./products/butter-tteok.webp",
         alt: "Butter tteok pieces in a bakery tray",
       },
       {
-        src: "./products/butter-tteok-2.png",
+        src: "./products/butter-tteok-2.webp",
         alt: "Close-up of butter tteok pieces",
       },
     ],
