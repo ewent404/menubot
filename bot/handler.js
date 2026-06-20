@@ -19,9 +19,14 @@ export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, 
 
   log(`Message from ${customerName || "Telegram user"} (${chatId})`);
 
-  await sendMessage(chatId, reply, {
-    reply_markup: createMenuKeyboard(miniAppUrl),
-  });
+  try {
+    await sendMessage(chatId, reply, {
+      reply_markup: createMenuKeyboard(miniAppUrl),
+    });
+  } catch (error) {
+    log(`Customer reply failed: ${error.message}`);
+    return;
+  }
 
   if (shouldForwardToOwner({ ownerChatId, text, webAppData })) {
     try {

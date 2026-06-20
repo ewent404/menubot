@@ -97,3 +97,27 @@ test("telegram handler keeps customer order working if owner forward fails", asy
   assert.match(sent[0].text, /Order received from Mini App/);
   assert.match(logs.join("\n"), /Owner forward failed/);
 });
+
+test("telegram handler acknowledges stale updates if customer reply fails", async () => {
+  const logs = [];
+
+  await handleTelegramUpdate(
+    {
+      message: {
+        chat: { id: 202 },
+        from: { first_name: "Sophea" },
+        text: "/start",
+      },
+    },
+    {
+      miniAppUrl: "https://bigbunny.example",
+      ownerChatId: "999",
+      sendMessage: async () => {
+        throw new Error("chat not found");
+      },
+      log: (message) => logs.push(message),
+    },
+  );
+
+  assert.match(logs.join("\n"), /Customer reply failed/);
+});
