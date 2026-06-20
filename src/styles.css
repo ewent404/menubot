@@ -48,11 +48,21 @@ a {
   border-bottom: 1px solid #eaded7;
 }
 
+.telegram-mini-app .topbar {
+  height: 78px;
+  padding: 14px 12px 12px;
+  grid-template-columns: 1fr;
+}
+
 .brand-lockup {
   min-width: 0;
   width: min(100%, 230px);
   text-align: center;
   justify-self: center;
+}
+
+.telegram-mini-app .brand-lockup {
+  width: min(100%, 250px);
 }
 
 .topbar h1 {
@@ -158,6 +168,11 @@ a {
   justify-self: end;
   font-weight: 800;
   line-height: 1;
+}
+
+.telegram-mini-app .link-button,
+.telegram-mini-app .round-button {
+  display: none;
 }
 
 .tabs {

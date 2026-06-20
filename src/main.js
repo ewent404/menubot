@@ -18,8 +18,16 @@ const state = {
 
 const app = document.querySelector("#app");
 
+function telegramWebApp() {
+  return window.Telegram?.WebApp;
+}
+
+function isTelegramMiniApp() {
+  return Boolean(telegramWebApp()?.initData);
+}
+
 app.innerHTML = `
-  <main class="phone-shell">
+  <main class="phone-shell ${isTelegramMiniApp() ? "telegram-mini-app" : ""}">
     <header class="topbar">
       <button class="link-button" type="button">Close</button>
       <div class="brand-lockup">
@@ -53,14 +61,6 @@ const checkoutEl = app.querySelector(".checkout-bar");
 const photoHeroEl = app.querySelector(".photo-hero");
 const arPanelEl = app.querySelector(".ar-panel");
 const arSheetEl = app.querySelector(".ar-sheet");
-
-function telegramWebApp() {
-  return window.Telegram?.WebApp;
-}
-
-function isTelegramMiniApp() {
-  return Boolean(telegramWebApp()?.initData);
-}
 
 let scene;
 let camera;
