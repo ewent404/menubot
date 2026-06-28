@@ -10,7 +10,7 @@ function shouldForwardToOwner({ ownerChatId, text, webAppData }) {
   return !text.startsWith("/start") && !text.startsWith("/help") && !text.startsWith("/menu");
 }
 
-export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, sendMessage, log = () => {} }) {
+export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, sendMessage, orderSendMessage = sendMessage, log = () => {} }) {
   const chatId = message.chat.id;
   const text = message.text ?? "";
   const webAppData = message.web_app_data?.data;
@@ -30,7 +30,7 @@ export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, 
 
   if (shouldForwardToOwner({ ownerChatId, text, webAppData })) {
     try {
-      await sendMessage(ownerChatId, createOwnerForwardText({ message: webAppData ? reply : text, customerName }));
+      await orderSendMessage(ownerChatId, createOwnerForwardText({ message: webAppData ? reply : text, customerName }));
     } catch (error) {
       log(`Owner forward failed: ${error.message}`);
     }
