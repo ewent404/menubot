@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { createMiniAppOrderData, createOrderText } from "../src/orderLink.js";
-import { createBotReply, createMenuKeyboard, resolveOrderPayload } from "../bot/messages.js";
+import { createBotReply, createMenuKeyboard, createMiniAppOrderReply, resolveOrderPayload } from "../bot/messages.js";
 
 test("order text is readable for customer paste into Telegram", () => {
   const text = createOrderText({
@@ -55,7 +55,7 @@ test("mini app order data carries the selected product, size, quantity, and tota
   });
 });
 
-test("bot can format orders sent from Telegram Mini App data", () => {
+test("bot confirms mini app orders to customers without echoing full details", () => {
   const orderData = JSON.stringify({
     type: "order",
     itemName: "Butter Tteok",
@@ -66,6 +66,23 @@ test("bot can format orders sent from Telegram Mini App data", () => {
   });
 
   const reply = createBotReply("", { webAppData: orderData });
+
+  assert.match(reply, /Order sent/);
+  assert.doesNotMatch(reply, /Product:/);
+  assert.doesNotMatch(reply, /Butter Tteok/);
+});
+
+test("bot formats full mini app order details for staff alerts", () => {
+  const orderData = JSON.stringify({
+    type: "order",
+    itemName: "Butter Tteok",
+    sizeLabel: "6 pieces",
+    detail: "6 pcs · 14 cm x 4 cm",
+    quantity: 1,
+    totalText: "$3.50",
+  });
+
+  const reply = createMiniAppOrderReply(orderData);
 
   assert.match(reply, /Order received from Mini App/);
   assert.match(reply, /Butter Tteok/);

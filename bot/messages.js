@@ -82,8 +82,27 @@ export function createMiniAppOrderReply(data) {
   ].join("\n");
 }
 
+export function createMiniAppCustomerReply(data) {
+  let order;
+  try {
+    order = JSON.parse(data);
+  } catch {
+    return "I could not read that order. Please open the menu and try again.";
+  }
+
+  if (order?.type !== "order") {
+    return "I could not read that order. Please open the menu and try again.";
+  }
+
+  return [
+    "Order sent.",
+    "We received your order and will confirm soon.",
+    "Please send your name, pickup/delivery time, and phone number if you have not sent it yet.",
+  ].join("\n");
+}
+
 export function createBotReply(text = "", { webAppData, chatId } = {}) {
-  if (webAppData) return createMiniAppOrderReply(webAppData);
+  if (webAppData) return createMiniAppCustomerReply(webAppData);
 
   const trimmed = text.trim();
 

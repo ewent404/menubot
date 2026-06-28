@@ -55,7 +55,8 @@ test("telegram handler forwards mini app orders to the owner chat", async () => 
 
   assert.equal(sent.length, 2);
   assert.equal(sent[0].chatId, 202);
-  assert.match(sent[0].text, /Order received from Mini App/);
+  assert.match(sent[0].text, /Order sent/);
+  assert.doesNotMatch(sent[0].text, /Product:/);
   assert.equal(sent[1].chatId, "999");
   assert.match(sent[1].text, /Customer: Sophea/);
   assert.match(sent[1].text, /Brownie Tube/);
@@ -91,6 +92,8 @@ test("telegram handler can forward orders with a separate order bot sender", asy
 
   assert.equal(customerMessages.length, 1);
   assert.equal(customerMessages[0].chatId, 202);
+  assert.match(customerMessages[0].text, /Order sent/);
+  assert.doesNotMatch(customerMessages[0].text, /Product:/);
   assert.equal(orderBotMessages.length, 1);
   assert.equal(orderBotMessages[0].chatId, "-100999");
   assert.match(orderBotMessages[0].text, /Brownie Tube/);
@@ -129,7 +132,8 @@ test("telegram handler keeps customer order working if owner forward fails", asy
 
   assert.equal(sent.length, 1);
   assert.equal(sent[0].chatId, 202);
-  assert.match(sent[0].text, /Order received from Mini App/);
+  assert.match(sent[0].text, /Order sent/);
+  assert.doesNotMatch(sent[0].text, /Product:/);
   assert.match(logs.join("\n"), /Owner forward failed/);
 });
 

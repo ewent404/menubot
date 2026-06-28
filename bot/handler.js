@@ -1,4 +1,4 @@
-import { createBotReply, createMenuKeyboard, createOwnerForwardText } from "./messages.js";
+import { createBotReply, createMenuKeyboard, createMiniAppOrderReply, createOwnerForwardText } from "./messages.js";
 
 function customerNameFrom(message) {
   return [message.from?.first_name, message.from?.last_name].filter(Boolean).join(" ");
@@ -30,7 +30,8 @@ export async function handleTelegramMessage(message, { miniAppUrl, ownerChatId, 
 
   if (shouldForwardToOwner({ ownerChatId, text, webAppData })) {
     try {
-      await orderSendMessage(ownerChatId, createOwnerForwardText({ message: webAppData ? reply : text, customerName }));
+      const ownerMessage = webAppData ? createMiniAppOrderReply(webAppData) : text;
+      await orderSendMessage(ownerChatId, createOwnerForwardText({ message: ownerMessage, customerName }));
     } catch (error) {
       log(`Owner forward failed: ${error.message}`);
     }
