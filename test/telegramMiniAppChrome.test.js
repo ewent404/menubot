@@ -37,6 +37,7 @@ test("telegram mini app order posts directly to the server before returning to c
   assert.match(mainSource, /collectOrderDetails/);
   assert.match(mainSource, /telegramUser: miniApp\?\.initDataUnsafe\?\.user/);
   assert.match(mainSource, /window\.setTimeout\(\(\) => miniApp\.close\?\.\(\), 650\)/);
+  assert.doesNotMatch(mainSource, /showAlert/);
 });
 
 test("telegram mini app collects fulfillment and payment details before sending", async () => {

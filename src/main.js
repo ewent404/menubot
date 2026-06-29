@@ -541,7 +541,6 @@ async function handleOrder(orderLink, event) {
     try {
       await submitMiniAppOrder(miniAppOrder, miniApp, orderDetails.customer);
       if (status) status.textContent = "Order sent. Returning to Telegram chat...";
-      miniApp?.showAlert?.("Order sent. BigBunny HomeBake will confirm soon.");
       window.setTimeout(() => miniApp?.close?.(), 650);
     } catch {
       if (miniApp?.sendData) {
