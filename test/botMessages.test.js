@@ -89,6 +89,36 @@ test("bot formats full mini app order details for staff alerts", () => {
   assert.match(reply, /\$3\.50/);
 });
 
+test("bot formats customer fulfillment and payment details for staff alerts", () => {
+  const orderData = JSON.stringify({
+    type: "order",
+    itemName: "Brownie Tube",
+    sizeLabel: "Tube",
+    detail: "15-20 pcs · 6 cm x 16 cm",
+    quantity: 1,
+    totalText: "$4.50",
+    customer: {
+      name: "Dara",
+      phone: "012345678",
+      fulfillment: "delivery",
+      location: "Toul Kork",
+      time: "6 PM",
+      paymentMethod: "pay-now",
+      note: "No nuts",
+    },
+  });
+
+  const reply = createMiniAppOrderReply(orderData);
+
+  assert.match(reply, /Customer name: Dara/);
+  assert.match(reply, /Phone: 012345678/);
+  assert.match(reply, /Fulfillment: Delivery/);
+  assert.match(reply, /Location: Toul Kork/);
+  assert.match(reply, /Time: 6 PM/);
+  assert.match(reply, /Payment: Pay now/);
+  assert.match(reply, /Note: No nuts/);
+});
+
 test("bot menu keyboard opens the mini app when a URL is configured", () => {
   const keyboard = createMenuKeyboard("https://example.com/bigbunny\n");
 

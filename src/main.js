@@ -13,6 +13,7 @@ const state = {
   sizeIndex: 0,
   photoIndex: 0,
   quantity: 1,
+  orderDetailsOpen: false,
   arOpen: false,
   arAvailability: { supported: false, reason: "checking" },
 };
@@ -214,6 +215,43 @@ function renderPhotoStrip(item) {
 function renderCheckout() {
   const item = selectedItem();
   const size = selectedSize();
+  const orderDetails = isTelegramMiniApp() && state.orderDetailsOpen
+    ? `
+      <form class="order-details" data-order-details>
+        <h3>Customer details</h3>
+        <label>
+          <span>Name</span>
+          <input name="customerName" type="text" autocomplete="name" placeholder="Your name" />
+        </label>
+        <label>
+          <span>Phone number</span>
+          <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Phone number" required />
+        </label>
+        <fieldset>
+          <legend>Pickup or delivery</legend>
+          <label><input name="fulfillment" type="radio" value="pickup" checked /> Pickup</label>
+          <label><input name="fulfillment" type="radio" value="delivery" /> Delivery</label>
+        </fieldset>
+        <label>
+          <span>Delivery location</span>
+          <input name="location" type="text" placeholder="Required for delivery" />
+        </label>
+        <label>
+          <span>Preferred time</span>
+          <input name="time" type="text" placeholder="Example: today 6 PM" />
+        </label>
+        <fieldset>
+          <legend>Payment</legend>
+          <label><input name="paymentMethod" type="radio" value="pay-now" checked /> Pay now</label>
+          <label><input name="paymentMethod" type="radio" value="pay-on-delivery" /> Pay on delivery / pickup</label>
+        </fieldset>
+        <label>
+          <span>Note</span>
+          <textarea name="note" rows="2" placeholder="Optional"></textarea>
+        </label>
+      </form>
+    `
+    : "";
 
   checkoutEl.innerHTML = `
     <div>
@@ -225,7 +263,8 @@ function renderCheckout() {
       <span>${state.quantity}</span>
       <button data-qty="1" type="button" aria-label="Increase quantity">+</button>
     </div>
-    <a class="order-button" href="${isTelegramMiniApp() ? "#" : createTelegramOrderLink({ item, size, quantity: state.quantity })}" data-order-text="${encodeURIComponent(createOrderText({ item, size, quantity: state.quantity }))}" data-mini-app-order="${encodeURIComponent(createMiniAppOrderData({ item, size, quantity: state.quantity }))}" target="_blank" rel="noreferrer">${isTelegramMiniApp() ? "Send order to bot" : "Order in Telegram"}</a>
+    ${orderDetails}
+    <a class="order-button" href="${isTelegramMiniApp() ? "#" : createTelegramOrderLink({ item, size, quantity: state.quantity })}" data-order-text="${encodeURIComponent(createOrderText({ item, size, quantity: state.quantity }))}" data-mini-app-order="${encodeURIComponent(createMiniAppOrderData({ item, size, quantity: state.quantity }))}" target="_blank" rel="noreferrer">${isTelegramMiniApp() && state.orderDetailsOpen ? "Confirm order" : isTelegramMiniApp() ? "Send order to bot" : "Order in Telegram"}</a>
     <p class="order-status" aria-live="polite"></p>
   `;
 }
@@ -451,14 +490,14 @@ function bindEvents() {
       const nextCategory = category.dataset.category;
       const firstItem = menuItems.find((menuItem) => menuItem.category === nextCategory);
       preloadItemPhotos(firstItem.id);
-      setState({ categoryId: nextCategory, itemId: firstItem.id, sizeIndex: 0, photoIndex: 0 });
+      setState({ categoryId: nextCategory, itemId: firstItem.id, sizeIndex: 0, photoIndex: 0, orderDetailsOpen: false });
     }
 
     if (item) {
       preloadItemPhotos(item.dataset.item);
-      setState({ itemId: item.dataset.item, sizeIndex: 0, photoIndex: 0 });
+      setState({ itemId: item.dataset.item, sizeIndex: 0, photoIndex: 0, orderDetailsOpen: false });
     }
-    if (size) setState({ sizeIndex: Number(size.dataset.size) });
+    if (size) setState({ sizeIndex: Number(size.dataset.size), orderDetailsOpen: false });
     const photo = event.target.closest("[data-photo]");
     if (photo) setState({ photoIndex: Number(photo.dataset.photo) });
     if (qty) {
@@ -484,10 +523,23 @@ async function handleOrder(orderLink, event) {
   if (isTelegramMiniApp() && miniAppOrder) {
     event.preventDefault();
     const status = checkoutEl.querySelector(".order-status");
+
+    if (!state.orderDetailsOpen) {
+      setState({ orderDetailsOpen: true }, { renderMode: "checkout" });
+      checkoutEl.querySelector("[name='phone']")?.focus();
+      return;
+    }
+
+    const orderDetails = collectOrderDetails();
+    if (!orderDetails.ok) {
+      if (status) status.textContent = orderDetails.error;
+      return;
+    }
+
     if (status) status.textContent = "Sending order...";
 
     try {
-      await submitMiniAppOrder(miniAppOrder, miniApp);
+      await submitMiniAppOrder(miniAppOrder, miniApp, orderDetails.customer);
       if (status) status.textContent = "Order sent. Returning to Telegram chat...";
       miniApp?.showAlert?.("Order sent. BigBunny HomeBake will confirm soon.");
       window.setTimeout(() => miniApp?.close?.(), 650);
@@ -507,12 +559,41 @@ async function handleOrder(orderLink, event) {
   await copyOrderText(orderLink);
 }
 
-async function submitMiniAppOrder(miniAppOrder, miniApp) {
+function collectOrderDetails() {
+  const form = checkoutEl.querySelector("[data-order-details]");
+  if (!form) return { ok: false, error: "Please add customer details first." };
+
+  const formData = new FormData(form);
+  const customer = {
+    name: String(formData.get("customerName") ?? "").trim(),
+    phone: String(formData.get("phone") ?? "").trim(),
+    fulfillment: String(formData.get("fulfillment") ?? "pickup"),
+    location: String(formData.get("location") ?? "").trim(),
+    time: String(formData.get("time") ?? "").trim(),
+    paymentMethod: String(formData.get("paymentMethod") ?? "pay-now"),
+    note: String(formData.get("note") ?? "").trim(),
+  };
+
+  if (!customer.phone) {
+    return { ok: false, error: "Phone number is required." };
+  }
+
+  if (customer.fulfillment === "delivery" && !customer.location) {
+    return { ok: false, error: "Delivery location is required." };
+  }
+
+  return { ok: true, customer };
+}
+
+async function submitMiniAppOrder(miniAppOrder, miniApp, customer) {
+  const order = JSON.parse(miniAppOrder);
+  order.customer = customer;
+
   const response = await fetch("/api/order-alert", {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
-      order: JSON.parse(miniAppOrder),
+      order,
       telegramUser: miniApp?.initDataUnsafe?.user,
     }),
   });

@@ -551,6 +551,85 @@ a {
   font-weight: 850;
 }
 
+.order-details {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  max-height: 46vh;
+  overflow: auto;
+  padding: 12px;
+  border: 1px solid #eaded7;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.order-details h3,
+.order-details fieldset,
+.order-details label:last-child {
+  grid-column: 1 / -1;
+}
+
+.order-details h3 {
+  margin: 0;
+  color: #111827;
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.order-details label,
+.order-details fieldset {
+  min-width: 0;
+}
+
+.order-details label span,
+.order-details legend {
+  display: block;
+  margin: 0 0 5px;
+  color: #5e6c78;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.order-details input[type="text"],
+.order-details input[type="tel"],
+.order-details textarea {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #d7e0e5;
+  border-radius: 8px;
+  background: #fffaf7;
+  padding: 9px 10px;
+  color: #111827;
+  font: inherit;
+  font-size: 13px;
+}
+
+.order-details textarea {
+  resize: vertical;
+}
+
+.order-details fieldset {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.order-details fieldset label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #d7e0e5;
+  border-radius: 8px;
+  padding: 8px;
+  color: #111827;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .order-status {
   grid-column: 1 / -1;
   min-height: 18px;

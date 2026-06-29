@@ -5,6 +5,11 @@ function formatMoney(value) {
   return `$${value.toFixed(2)}`;
 }
 
+function titleCase(value = "") {
+  const label = value.replace(/-/g, " ").trim().toLowerCase();
+  return label ? label.charAt(0).toUpperCase() + label.slice(1) : "";
+}
+
 export function resolveOrderPayload(payload) {
   if (!payload?.startsWith("order_")) return null;
 
@@ -70,6 +75,17 @@ export function createMiniAppOrderReply(data) {
     return "I could not read that order. Please open the menu and try again.";
   }
 
+  const customer = order.customer ?? {};
+  const customerLines = [
+    customer.name ? `Customer name: ${customer.name}` : null,
+    customer.phone ? `Phone: ${customer.phone}` : null,
+    customer.fulfillment ? `Fulfillment: ${titleCase(customer.fulfillment)}` : null,
+    customer.location ? `Location: ${customer.location}` : null,
+    customer.time ? `Time: ${customer.time}` : null,
+    customer.paymentMethod ? `Payment: ${titleCase(customer.paymentMethod)}` : null,
+    customer.note ? `Note: ${customer.note}` : null,
+  ].filter(Boolean);
+
   return [
     "Order received from Mini App.",
     `Product: ${order.itemName}`,
@@ -78,7 +94,7 @@ export function createMiniAppOrderReply(data) {
     `Quantity: ${order.quantity}`,
     `Total: ${order.totalText}`,
     "",
-    "Please send your name, pickup/delivery time, and phone number to confirm.",
+    ...(customerLines.length ? customerLines : ["Please send your name, pickup/delivery time, and phone number to confirm."]),
   ].join("\n");
 }
 
