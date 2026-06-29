@@ -29,9 +29,11 @@ test("telegram mini app hides duplicate local header controls", async () => {
   assert.match(cssSource, /\.telegram-mini-app \.round-button/);
 });
 
-test("telegram mini app order returns the customer to chat", async () => {
+test("telegram mini app order posts directly to the server before returning to chat", async () => {
   const mainSource = await readFile("src/main.js", "utf8");
 
-  assert.match(mainSource, /miniApp\.sendData\(miniAppOrder\)/);
+  assert.match(mainSource, /fetch\("\/api\/order-alert"/);
+  assert.match(mainSource, /method: "POST"/);
+  assert.match(mainSource, /telegramUser: miniApp\?\.initDataUnsafe\?\.user/);
   assert.match(mainSource, /window\.setTimeout\(\(\) => miniApp\.close\?\.\(\), 650\)/);
 });

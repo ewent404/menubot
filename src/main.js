@@ -481,16 +481,45 @@ async function handleOrder(orderLink, event) {
   const miniApp = telegramWebApp();
   const miniAppOrder = decodeURIComponent(orderLink.dataset.miniAppOrder ?? "");
 
-  if (isTelegramMiniApp() && miniApp?.sendData && miniAppOrder) {
+  if (isTelegramMiniApp() && miniAppOrder) {
     event.preventDefault();
-    miniApp.sendData(miniAppOrder);
     const status = checkoutEl.querySelector(".order-status");
-    if (status) status.textContent = "Order sent. Returning to Telegram chat...";
-    window.setTimeout(() => miniApp.close?.(), 650);
+    if (status) status.textContent = "Sending order...";
+
+    try {
+      await submitMiniAppOrder(miniAppOrder, miniApp);
+      if (status) status.textContent = "Order sent. Returning to Telegram chat...";
+      miniApp?.showAlert?.("Order sent. BigBunny HomeBake will confirm soon.");
+      window.setTimeout(() => miniApp?.close?.(), 650);
+    } catch {
+      if (miniApp?.sendData) {
+        miniApp.sendData(miniAppOrder);
+        if (status) status.textContent = "Order sent. Returning to Telegram chat...";
+        window.setTimeout(() => miniApp.close?.(), 650);
+        return;
+      }
+
+      if (status) status.textContent = "Could not send order. Please try again.";
+    }
     return;
   }
 
   await copyOrderText(orderLink);
+}
+
+async function submitMiniAppOrder(miniAppOrder, miniApp) {
+  const response = await fetch("/api/order-alert", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      order: JSON.parse(miniAppOrder),
+      telegramUser: miniApp?.initDataUnsafe?.user,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Order alert failed");
+  }
 }
 
 async function copyOrderText(orderLink) {
