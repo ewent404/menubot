@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 import { isTelegramMiniApp } from "../src/telegramMiniApp.js";
 
@@ -63,4 +63,10 @@ test("telegram mini app prepares order numbers and Pay Now guidance", async () =
   assert.match(mainSource, /order\.orderNumber = createOrderNumber/);
   assert.match(mainSource, /pay-now-help/);
   assert.match(mainSource, /\/pay-now-qr\.png/);
+});
+
+test("pay now qr image is available as a public asset", async () => {
+  const file = await stat("public/pay-now-qr.png");
+
+  assert.ok(file.size > 10_000);
 });
