@@ -566,6 +566,7 @@ a {
 
 .order-details h3,
 .order-details fieldset,
+.pay-now-help,
 .order-details label:last-child {
   grid-column: 1 / -1;
 }
@@ -628,6 +629,44 @@ a {
   color: #111827;
   font-size: 12px;
   font-weight: 800;
+}
+
+.pay-now-help {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 12px;
+  align-items: center;
+  border: 1px dashed #d7e0e5;
+  border-radius: 8px;
+  background: #fffaf7;
+  padding: 10px;
+}
+
+.pay-now-help strong,
+.pay-now-help span {
+  grid-column: 1;
+}
+
+.pay-now-help strong {
+  color: #6b2d1a;
+  font-size: 12px;
+}
+
+.pay-now-help span {
+  margin: 0;
+  color: #5e6c78;
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+.pay-now-help img {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
 }
 
 .order-status {

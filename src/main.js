@@ -216,38 +216,43 @@ function renderCheckout() {
   const item = selectedItem();
   const size = selectedSize();
   const orderDetails = isTelegramMiniApp() && state.orderDetailsOpen
-    ? `
+      ? `
       <form class="order-details" data-order-details>
-        <h3>Customer details</h3>
+        <h3>Customer details / ព័ត៌មានអតិថិជន</h3>
         <label>
-          <span>Name</span>
-          <input name="customerName" type="text" autocomplete="name" placeholder="Your name" />
+          <span>Name / ឈ្មោះ</span>
+          <input name="customerName" type="text" autocomplete="name" placeholder="Your name / ឈ្មោះ" />
         </label>
         <label>
-          <span>Phone number</span>
-          <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Phone number" required />
+          <span>Phone number / លេខទូរស័ព្ទ</span>
+          <input name="phone" type="tel" autocomplete="tel" inputmode="tel" placeholder="Phone number / លេខទូរស័ព្ទ" required />
         </label>
         <fieldset>
-          <legend>Pickup or delivery</legend>
-          <label><input name="fulfillment" type="radio" value="pickup" checked /> Pickup</label>
-          <label><input name="fulfillment" type="radio" value="delivery" /> Delivery</label>
+          <legend>Pickup or delivery / មកយក ឬ ដឹកជញ្ជូន</legend>
+          <label><input name="fulfillment" type="radio" value="pickup" checked /> Pickup / មកយក</label>
+          <label><input name="fulfillment" type="radio" value="delivery" /> Delivery / ដឹកជញ្ជូន</label>
         </fieldset>
         <label>
-          <span>Delivery location</span>
-          <input name="location" type="text" placeholder="Required for delivery" />
+          <span>Delivery location / ទីតាំងដឹកជញ្ជូន</span>
+          <input name="location" type="text" placeholder="Required for delivery / ត្រូវការសម្រាប់ដឹកជញ្ជូន" />
         </label>
         <label>
-          <span>Preferred time</span>
-          <input name="time" type="text" placeholder="Example: today 6 PM" />
+          <span>Preferred time / ម៉ោងចង់បាន</span>
+          <input name="time" type="text" placeholder="Example: today 6 PM / ឧ. ថ្ងៃនេះ 6PM" />
         </label>
         <fieldset>
-          <legend>Payment</legend>
-          <label><input name="paymentMethod" type="radio" value="pay-now" checked /> Pay now</label>
+          <legend>Payment / ការទូទាត់</legend>
+          <label><input name="paymentMethod" type="radio" value="pay-now" checked /> Pay now / បង់ឥឡូវនេះ</label>
           <label><input name="paymentMethod" type="radio" value="pay-on-delivery" /> Pay on delivery / pickup</label>
         </fieldset>
+        <div class="pay-now-help">
+          <strong>Pay now / បង់ឥឡូវនេះ</strong>
+          <span>Scan the QR if available, then send payment screenshot in Telegram.</span>
+          <img src="/pay-now-qr.png" alt="Pay Now QR" loading="lazy" onerror="this.hidden=true" />
+        </div>
         <label>
-          <span>Note</span>
-          <textarea name="note" rows="2" placeholder="Optional"></textarea>
+          <span>Note / ចំណាំ</span>
+          <textarea name="note" rows="2" placeholder="Optional / បន្ថែមបើមាន"></textarea>
         </label>
       </form>
     `
@@ -537,14 +542,15 @@ async function handleOrder(orderLink, event) {
     }
 
     if (status) status.textContent = "Sending order...";
+    const finalMiniAppOrder = prepareMiniAppOrder(miniAppOrder, orderDetails.customer);
 
     try {
-      await submitMiniAppOrder(miniAppOrder, miniApp, orderDetails.customer);
+      await submitMiniAppOrder(finalMiniAppOrder, miniApp);
       if (status) status.textContent = "Order sent. Returning to Telegram chat...";
       window.setTimeout(() => miniApp?.close?.(), 650);
     } catch {
       if (miniApp?.sendData) {
-        miniApp.sendData(miniAppOrder);
+        miniApp.sendData(finalMiniAppOrder);
         if (status) status.textContent = "Order sent. Returning to Telegram chat...";
         window.setTimeout(() => miniApp.close?.(), 650);
         return;
@@ -556,6 +562,15 @@ async function handleOrder(orderLink, event) {
   }
 
   await copyOrderText(orderLink);
+}
+
+function createOrderNumber(date = new Date()) {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hour = String(date.getHours()).padStart(2, "0");
+  const minute = String(date.getMinutes()).padStart(2, "0");
+  const second = String(date.getSeconds()).padStart(2, "0");
+  return `BB-${month}${day}-${hour}${minute}${second}`;
 }
 
 function collectOrderDetails() {
@@ -584,9 +599,15 @@ function collectOrderDetails() {
   return { ok: true, customer };
 }
 
-async function submitMiniAppOrder(miniAppOrder, miniApp, customer) {
+function prepareMiniAppOrder(miniAppOrder, customer) {
   const order = JSON.parse(miniAppOrder);
+  order.orderNumber = createOrderNumber();
   order.customer = customer;
+  return JSON.stringify(order);
+}
+
+async function submitMiniAppOrder(miniAppOrder, miniApp) {
+  const order = JSON.parse(miniAppOrder);
 
   const response = await fetch("/api/order-alert", {
     method: "POST",

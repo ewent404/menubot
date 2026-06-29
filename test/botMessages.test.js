@@ -119,6 +119,29 @@ test("bot formats customer fulfillment and payment details for staff alerts", ()
   assert.match(reply, /Note: No nuts/);
 });
 
+test("bot includes an order number and Pay Now follow-up for staff alerts", () => {
+  const orderData = JSON.stringify({
+    type: "order",
+    itemName: "Brownie Tube",
+    sizeLabel: "Tube",
+    detail: "15-20 pcs · 6 cm x 16 cm",
+    quantity: 1,
+    totalText: "$4.50",
+    orderNumber: "BB-0629-001",
+    customer: {
+      phone: "012345678",
+      fulfillment: "pickup",
+      paymentMethod: "pay-now",
+    },
+  });
+
+  const reply = createMiniAppOrderReply(orderData);
+
+  assert.match(reply, /Order #: BB-0629-001/);
+  assert.match(reply, /Payment: Pay now/);
+  assert.match(reply, /Pay Now: Ask customer for payment screenshot/);
+});
+
 test("bot menu keyboard opens the mini app when a URL is configured", () => {
   const keyboard = createMenuKeyboard("https://example.com/bigbunny\n");
 

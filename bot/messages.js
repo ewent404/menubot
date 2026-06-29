@@ -83,11 +83,13 @@ export function createMiniAppOrderReply(data) {
     customer.location ? `Location: ${customer.location}` : null,
     customer.time ? `Time: ${customer.time}` : null,
     customer.paymentMethod ? `Payment: ${titleCase(customer.paymentMethod)}` : null,
+    customer.paymentMethod === "pay-now" ? "Pay Now: Ask customer for payment screenshot" : null,
     customer.note ? `Note: ${customer.note}` : null,
   ].filter(Boolean);
 
   return [
     "Order received from Mini App.",
+    order.orderNumber ? `Order #: ${order.orderNumber}` : null,
     `Product: ${order.itemName}`,
     `Size: ${order.sizeLabel}`,
     `Detail: ${order.detail}`,
@@ -95,7 +97,7 @@ export function createMiniAppOrderReply(data) {
     `Total: ${order.totalText}`,
     "",
     ...(customerLines.length ? customerLines : ["Please send your name, pickup/delivery time, and phone number to confirm."]),
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 export function createMiniAppCustomerReply(data) {
