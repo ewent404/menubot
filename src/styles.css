@@ -884,6 +884,7 @@ a {
 
 .admin-header button,
 .admin-actions button,
+.admin-category-row button,
 .admin-size-row button,
 .admin-photo-row button {
   min-height: 40px;
@@ -916,6 +917,56 @@ a {
   display: grid;
   gap: 8px;
   margin-top: 12px;
+}
+
+.admin-category-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.admin-category-row {
+  margin: 0;
+  border: 1px solid #eaded7;
+  border-radius: 8px;
+  background: #fffaf7;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+
+.admin-category-row label {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.admin-category-row input {
+  min-width: 0;
+  min-height: 38px;
+  border: 1px solid #d9c9bd;
+  border-radius: 8px;
+  background: #fff;
+  color: #111827;
+  padding: 8px 9px;
+  font: inherit;
+}
+
+.admin-category-row .admin-toggle input {
+  width: 20px;
+  min-height: 20px;
+}
+
+.admin-muted {
+  grid-column: 1 / -1;
+  color: #6b7280;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .admin-product-list button {
@@ -1043,6 +1094,7 @@ a {
   .admin-header,
   .admin-editor-grid,
   .admin-row,
+  .admin-category-row,
   .admin-size-row,
   .admin-photo-row {
     grid-template-columns: 1fr;

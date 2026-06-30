@@ -38,6 +38,33 @@ export function createBlankProduct(categoryId) {
   };
 }
 
+export function createBlankCategory(existingCategories = []) {
+  return {
+    id: `category-${Date.now()}`,
+    label: "New category",
+    sortOrder: existingCategories.length + 1,
+    isActive: true,
+  };
+}
+
+export function updateCategory(category, updates) {
+  category.label = updates.label ?? category.label ?? category.id;
+  category.isActive = updates.isActive ?? category.isActive !== false;
+  return category;
+}
+
+export function hasProductSizeRows(product) {
+  return Array.isArray(product?.sizes) && product.sizes.length > 0;
+}
+
+export function validateAdminMenu(menu) {
+  const products = menu?.products ?? menu?.menuItems ?? [];
+  if (products.some((product) => !hasProductSizeRows(product))) {
+    return { ok: false, message: "Every product needs at least one size." };
+  }
+  return { ok: true, message: "" };
+}
+
 export async function verifyAdminPassword(password, fetchImpl = fetch) {
   if (!password) return false;
 
@@ -164,6 +191,14 @@ export async function renderAdminEditor(root, adminToken) {
         <section class="admin-editor admin-editor-grid" data-admin-token="${adminToken ? "ready" : "missing"}">
           <aside class="admin-sidebar">
             <div class="admin-actions">
+              <h2>Categories</h2>
+              <button type="button" data-add-category>Add category</button>
+            </div>
+            <div class="admin-category-list">
+              ${categories().map((category, index) => renderCategoryRow(category, index)).join("") || "<p>No categories yet.</p>"}
+            </div>
+            <div class="admin-actions">
+              <h2>Products</h2>
               <button type="button" data-add-product>Add product</button>
             </div>
             <div class="admin-product-list">
@@ -184,6 +219,20 @@ export async function renderAdminEditor(root, adminToken) {
       <strong>${escapeHtml(product.name)}</strong>
       <span>${escapeHtml(product.category)}</span>
     </button>
+  `;
+
+  const renderCategoryRow = (category, index) => `
+    <fieldset class="admin-category-row" data-category-index="${index}">
+      <label>
+        <span>Label</span>
+        <input name="category-label" value="${escapeHtml(category.label ?? category.id)}" />
+      </label>
+      <label class="admin-toggle">
+        <span>Active</span>
+        <input name="category-active" type="checkbox" ${category.isActive !== false ? "checked" : ""} />
+      </label>
+      <span class="admin-muted">${escapeHtml(category.id)}</span>
+    </fieldset>
   `;
 
   const renderProductForm = (product) => `
@@ -282,24 +331,48 @@ export async function renderAdminEditor(root, adminToken) {
     }));
   };
 
-  root.addEventListener("input", updateProductFromForm);
-  root.addEventListener("change", updateProductFromForm);
+  const updateCategoriesFromEditor = () => {
+    root.querySelectorAll("[data-category-index]").forEach((row) => {
+      const category = categories()[Number(row.dataset.categoryIndex)];
+      if (!category) return;
+      updateCategory(category, {
+        label: row.querySelector("[name='category-label']").value,
+        isActive: row.querySelector("[name='category-active']").checked,
+      });
+    });
+  };
+
+  const updateEditorState = () => {
+    updateProductFromForm();
+    updateCategoriesFromEditor();
+  };
+
+  root.addEventListener("input", updateEditorState);
+  root.addEventListener("change", updateEditorState);
   root.addEventListener("submit", (event) => {
     event.preventDefault();
-    updateProductFromForm();
+    updateEditorState();
   });
   root.addEventListener("click", async (event) => {
     const target = event.target.closest("button");
     if (!target) return;
 
     if (target.dataset.selectProduct) {
-      updateProductFromForm();
+      updateEditorState();
       selectedProductId = target.dataset.selectProduct;
       render();
     }
 
+    if (target.dataset.addCategory !== undefined) {
+      updateEditorState();
+      const category = createBlankCategory(categories());
+      menu.categories = categories();
+      menu.categories.push(category);
+      render();
+    }
+
     if (target.dataset.addProduct !== undefined) {
-      updateProductFromForm();
+      updateEditorState();
       const categoryId = categories()[0]?.id ?? "tubes";
       const product = createBlankProduct(categoryId);
       if (menu.products) menu.products.push(product);
@@ -312,34 +385,44 @@ export async function renderAdminEditor(root, adminToken) {
     }
 
     if (target.dataset.addSize !== undefined) {
-      updateProductFromForm();
+      updateEditorState();
       const product = selectedProduct();
       product.sizes.push({ label: "New size", pieces: "", diameterCm: 10, heightCm: 5, price: 1, sortOrder: product.sizes.length + 1 });
       render();
     }
 
     if (target.dataset.addPhoto !== undefined) {
-      updateProductFromForm();
+      updateEditorState();
       const product = selectedProduct();
       product.photos.push({ src: "./products/brownie-tube.webp", alt: "Product photo", sortOrder: product.photos.length + 1 });
       render();
     }
 
     if (target.dataset.removeSize) {
-      updateProductFromForm();
-      selectedProduct().sizes.splice(Number(target.dataset.removeSize), 1);
+      updateEditorState();
+      const product = selectedProduct();
+      if (product.sizes.length <= 1) {
+        render("Every product needs at least one size.");
+        return;
+      }
+      product.sizes.splice(Number(target.dataset.removeSize), 1);
       render();
     }
 
     if (target.dataset.removePhoto) {
-      updateProductFromForm();
+      updateEditorState();
       selectedProduct().photos.splice(Number(target.dataset.removePhoto), 1);
       render();
     }
 
     if (target.dataset.adminSave !== undefined) {
-      updateProductFromForm();
+      updateEditorState();
       const status = root.querySelector("[data-save-status]");
+      const validation = validateAdminMenu(menu);
+      if (!validation.ok) {
+        if (status) status.textContent = validation.message;
+        return;
+      }
       if (status) status.textContent = "Saving...";
       try {
         const response = await fetch("/api/admin/menu", {
