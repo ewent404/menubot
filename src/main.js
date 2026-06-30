@@ -1,4 +1,5 @@
 import { getArStatusMessage, resolveArAvailability } from "./arSupport.js";
+import { isAdminRoute, renderAdminApp } from "./adminApp.js";
 import { renderBrandLockup } from "./brand.js";
 import { getFallbackMenu, loadPublicMenu } from "./menuRepository.js";
 import { createMiniAppOrderData, createOrderText, createTelegramOrderLink } from "./orderLink.js";
@@ -22,32 +23,35 @@ const state = {
 
 const app = document.querySelector("#app");
 
-app.innerHTML = `
-  <main class="phone-shell ${isTelegramMiniApp() ? "telegram-mini-app" : ""}">
-    <header class="topbar">
-      <button class="link-button" type="button">Close</button>
-      <div class="brand-lockup">
-        ${renderBrandLockup()}
-      </div>
-      <button class="round-button" type="button" aria-label="More options">•••</button>
-    </header>
+if (isAdminRoute()) {
+  renderAdminApp(app);
+} else {
+  app.innerHTML = `
+    <main class="phone-shell ${isTelegramMiniApp() ? "telegram-mini-app" : ""}">
+      <header class="topbar">
+        <button class="link-button" type="button">Close</button>
+        <div class="brand-lockup">
+          ${renderBrandLockup()}
+        </div>
+        <button class="round-button" type="button" aria-label="More options">•••</button>
+      </header>
 
-    <nav class="tabs" aria-label="Menu categories"></nav>
+      <nav class="tabs" aria-label="Menu categories"></nav>
 
-    <section class="content-grid">
-      <aside class="product-list" aria-label="Products"></aside>
-      <section class="details" aria-live="polite">
-        <div class="details-copy"></div>
-        <div class="photo-hero"></div>
-        <div class="ar-panel"></div>
-        <div class="size-panel"></div>
+      <section class="content-grid">
+        <aside class="product-list" aria-label="Products"></aside>
+        <section class="details" aria-live="polite">
+          <div class="details-copy"></div>
+          <div class="photo-hero"></div>
+          <div class="ar-panel"></div>
+          <div class="size-panel"></div>
+        </section>
       </section>
-    </section>
 
-    <footer class="checkout-bar"></footer>
-    <section class="ar-sheet" hidden aria-live="polite"></section>
-  </main>
-`;
+      <footer class="checkout-bar"></footer>
+      <section class="ar-sheet" hidden aria-live="polite"></section>
+    </main>
+  `;
 
 const tabsEl = app.querySelector(".tabs");
 const productListEl = app.querySelector(".product-list");
@@ -798,3 +802,4 @@ resolveArAvailability({
 window.addEventListener("beforeunload", () => {
   if (animationFrame) cancelAnimationFrame(animationFrame);
 });
+}
