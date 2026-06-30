@@ -84,3 +84,43 @@ test("customer menu can render from async API-shaped data", () => {
   assert.equal(menu.categories[0].label, "Seasonal");
   assert.equal(menu.menuItems[0].name, "New Cookie");
 });
+
+test("customer menu keeps active categories even when one has no active products", () => {
+  const menu = normalizeMenuData({
+    categories: [
+      { id: "seasonal", label: "Seasonal", isActive: true, sortOrder: 1 },
+      { id: "featured", label: "Featured", isActive: true, sortOrder: 2 },
+    ],
+    products: [
+      {
+        id: "inactive-cookie",
+        category: "seasonal",
+        name: "Inactive Cookie",
+        description: "Hidden item.",
+        isActive: false,
+        sortOrder: 1,
+        photos: [{ src: "./products/chocolate-cookie.webp", alt: "Inactive cookie", sortOrder: 1 }],
+        sizes: [{ label: "1 pc", diameterCm: 7, heightCm: 1.2, price: 0.75, sortOrder: 1 }],
+      },
+      {
+        id: "featured-brownie",
+        category: "featured",
+        name: "Featured Brownie",
+        description: "Visible item.",
+        isActive: true,
+        sortOrder: 2,
+        photos: [{ src: "./products/chocolate-cookie.webp", alt: "Featured brownie", sortOrder: 1 }],
+        sizes: [{ label: "Box", diameterCm: 10, heightCm: 4, price: 4.5, sortOrder: 1 }],
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    menu.categories.map((category) => category.id),
+    ["seasonal", "featured"],
+  );
+  assert.deepEqual(
+    menu.menuItems.map((item) => item.id),
+    ["featured-brownie"],
+  );
+});

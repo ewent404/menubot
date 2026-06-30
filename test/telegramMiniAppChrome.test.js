@@ -38,7 +38,15 @@ test("customer app hydrates menu data asynchronously at startup", async () => {
   assert.match(mainSource, /const loadedMenu = await loadPublicMenu\(\);/);
   assert.match(mainSource, /categories = loadedMenu\.categories;/);
   assert.match(mainSource, /menuItems = loadedMenu\.menuItems;/);
+  assert.match(mainSource, /categories\.find\(\(category\) => menuItems\.some\(\(item\) => item\.category === category\.id\)\)/);
   assert.match(mainSource, /hydrateMenu\(\);/);
+});
+
+test("customer app guards category clicks when a category has no products", async () => {
+  const mainSource = await readFile("src/main.js", "utf8");
+
+  assert.match(mainSource, /const firstItem = menuItems\.find\(\(menuItem\) => menuItem\.category === nextCategory\);/);
+  assert.match(mainSource, /if \(!firstItem\) return;/);
 });
 
 test("telegram mini app order posts directly to the server before returning to chat", async () => {

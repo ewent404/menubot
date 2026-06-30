@@ -69,17 +69,59 @@ let arRuntimePromise;
 let photoRenderToken = 0;
 const photoPreloadPromises = new Map();
 
+function itemsForCategory(categoryId) {
+  return menuItems.filter((item) => item.category === categoryId);
+}
+
+function firstItemForCategory(categoryId) {
+  return menuItems.find((item) => item.category === categoryId);
+}
+
+function firstCategoryWithItems() {
+  return categories.find((category) => menuItems.some((item) => item.category === category.id));
+}
+
+function getValidSelection(preferredCategoryId = state.categoryId, preferredItemId = state.itemId) {
+  const preferredItem = menuItems.find((item) => item.id === preferredItemId);
+  if (preferredItem) {
+    return { categoryId: preferredItem.category, itemId: preferredItem.id };
+  }
+
+  const preferredCategoryItem = preferredCategoryId ? firstItemForCategory(preferredCategoryId) : undefined;
+  if (preferredCategoryItem) {
+    return { categoryId: preferredCategoryId, itemId: preferredCategoryItem.id };
+  }
+
+  const fallbackCategory = firstCategoryWithItems();
+  const fallbackItem = fallbackCategory ? firstItemForCategory(fallbackCategory.id) : menuItems[0];
+  if (fallbackCategory && fallbackItem) {
+    return { categoryId: fallbackCategory.id, itemId: fallbackItem.id };
+  }
+  if (fallbackItem) {
+    return { categoryId: fallbackItem.category, itemId: fallbackItem.id };
+  }
+
+  return null;
+}
+
 function selectedItem() {
-  return menuItems.find((item) => item.id === state.itemId) ?? menuItems[0];
+  return menuItems.find((item) => item.id === state.itemId) ?? firstItemForCategory(state.categoryId) ?? menuItems[0] ?? null;
 }
 
 function selectedSize() {
   const item = selectedItem();
+  if (!item) return null;
   return item.sizes[state.sizeIndex] ?? item.sizes[0];
 }
 
 function selectedPhoto() {
   const item = selectedItem();
+  if (!item) {
+    return {
+      src: "./products/brownie-tube.webp",
+      alt: "Menu preview unavailable",
+    };
+  }
   return item.photos?.[state.photoIndex] ?? {
     src: item.photo,
     alt: item.photoAlt,
@@ -112,7 +154,7 @@ function renderTabs() {
 }
 
 function renderProducts() {
-  const items = menuItems.filter((item) => item.category === state.categoryId);
+  const items = itemsForCategory(state.categoryId);
   productListEl.innerHTML = items
     .map((item) => {
       const lowestPrice = Math.min(...item.sizes.map((size) => size.price));
@@ -134,6 +176,19 @@ function renderProducts() {
 function renderDetails() {
   const item = selectedItem();
   const size = selectedSize();
+  if (!item || !size) {
+    detailsCopyEl.innerHTML = `
+      <h2>Menu updating</h2>
+      <p>Please check back in a moment for the latest items.</p>
+    `;
+    photoHeroEl.innerHTML = "";
+    sizePanelEl.innerHTML = "";
+    arPanelEl.innerHTML = "";
+    checkoutEl.innerHTML = `<p class="order-status" aria-live="polite">No products available right now.</p>`;
+    arSheetEl.hidden = true;
+    arSheetEl.innerHTML = "";
+    return;
+  }
 
   detailsCopyEl.innerHTML = `
     <h2>${item.name}</h2>
@@ -279,6 +334,11 @@ function renderCheckout() {
 function renderArSheet() {
   const item = selectedItem();
   const size = selectedSize();
+  if (!item || !size) {
+    arSheetEl.hidden = true;
+    arSheetEl.innerHTML = "";
+    return;
+  }
   const arStatus = getArStatusMessage(state.arAvailability);
 
   arSheetEl.hidden = !state.arOpen;
@@ -496,6 +556,7 @@ function bindEvents() {
     if (category) {
       const nextCategory = category.dataset.category;
       const firstItem = menuItems.find((menuItem) => menuItem.category === nextCategory);
+      if (!firstItem) return;
       preloadItemPhotos(firstItem.id);
       setState({ categoryId: nextCategory, itemId: firstItem.id, sizeIndex: 0, photoIndex: 0, orderDetailsOpen: false });
     }
@@ -643,6 +704,13 @@ async function copyOrderText(orderLink) {
 }
 
 function render() {
+  const validSelection = getValidSelection();
+  if (validSelection && (validSelection.categoryId !== state.categoryId || validSelection.itemId !== state.itemId)) {
+    state.categoryId = validSelection.categoryId;
+    state.itemId = validSelection.itemId;
+    state.sizeIndex = 0;
+    state.photoIndex = 0;
+  }
   renderTabs();
   renderProducts();
   renderDetails();
@@ -695,9 +763,13 @@ async function hydrateMenu() {
   categories = loadedMenu.categories;
   menuItems = loadedMenu.menuItems;
 
-  if (!menuItems.some((item) => item.id === state.itemId)) {
-    state.categoryId = categories[0]?.id ?? "tubes";
-    state.itemId = menuItems.find((item) => item.category === state.categoryId)?.id ?? menuItems[0]?.id ?? "brownie-tube";
+  const validSelection = getValidSelection();
+  if (validSelection) {
+    state.categoryId = validSelection.categoryId;
+    state.itemId = validSelection.itemId;
+    state.sizeIndex = 0;
+    state.photoIndex = 0;
+  } else if (!menuItems.some((item) => item.id === state.itemId)) {
     state.sizeIndex = 0;
     state.photoIndex = 0;
   }
