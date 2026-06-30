@@ -10,6 +10,26 @@ function setToken(value) {
   window.sessionStorage.setItem("bigbunny-admin-token", value);
 }
 
+function clearToken() {
+  window.sessionStorage.removeItem("bigbunny-admin-token");
+}
+
+export async function verifyAdminPassword(password, fetchImpl = fetch) {
+  if (!password) return false;
+
+  try {
+    const response = await fetchImpl("/api/admin/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ password }),
+    });
+
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
 export function renderAdminApp(root) {
   root.innerHTML = `
     <main class="admin-shell">
@@ -36,13 +56,7 @@ export function renderAdminApp(root) {
     const password = new FormData(form).get("password").toString();
     status.textContent = "Checking...";
 
-    const response = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ password }),
-    });
-
-    if (!response.ok) {
+    if (!(await verifyAdminPassword(password))) {
       status.textContent = "Wrong password.";
       return;
     }
@@ -52,7 +66,21 @@ export function renderAdminApp(root) {
     renderAdminEditor(root, token());
   });
 
-  if (token()) renderAdminEditor(root, token());
+  validateStoredToken(root, status);
+}
+
+async function validateStoredToken(root, status) {
+  const storedToken = token();
+  if (!storedToken) return;
+
+  status.textContent = "Checking saved login...";
+  if (await verifyAdminPassword(storedToken)) {
+    renderAdminEditor(root, storedToken);
+    return;
+  }
+
+  clearToken();
+  status.textContent = "Please log in again.";
 }
 
 export async function renderAdminEditor(root, adminToken) {
