@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import loginHandler from "../api/admin/login.js";
 import menuHandler from "../api/admin/menu.js";
 
+delete process.env.SUPABASE_URL;
+delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
 function createResponse() {
   return {
     statusCode: 200,
@@ -39,6 +42,8 @@ test("admin login accepts correct password", async () => {
 });
 
 test("admin menu rejects missing password", async () => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   process.env.ADMIN_PASSWORD = "secret-admin";
   const response = createResponse();
 
@@ -48,7 +53,22 @@ test("admin menu rejects missing password", async () => {
   assert.equal(response.body.ok, false);
 });
 
+test("admin menu uses fallback storage when Supabase is not configured", async () => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  process.env.ADMIN_PASSWORD = "secret-admin";
+  const response = createResponse();
+
+  await menuHandler({ method: "GET", headers: { authorization: "Bearer secret-admin" }, body: {} }, response);
+
+  assert.equal(response.statusCode, 200);
+  assert.ok(response.body.menu.categories.length > 0);
+  assert.ok(response.body.menu.products.length > 0);
+});
+
 test("admin menu accepts valid save payload", async () => {
+  delete process.env.SUPABASE_URL;
+  delete process.env.SUPABASE_SERVICE_ROLE_KEY;
   process.env.ADMIN_PASSWORD = "secret-admin";
   const response = createResponse();
   const menu = {

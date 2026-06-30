@@ -1,5 +1,11 @@
-import { getFallbackMenu } from "../src/menuRepository.js";
+import { loadAdminMenu } from "./admin/supabaseMenuStore.js";
+import { getFallbackMenu, normalizeMenuData } from "../src/menuRepository.js";
 
 export default async function handler(_request, response) {
-  response.status(200).json(getFallbackMenu());
+  try {
+    const adminMenu = await loadAdminMenu();
+    response.status(200).json(normalizeMenuData(adminMenu));
+  } catch {
+    response.status(200).json(getFallbackMenu());
+  }
 }
