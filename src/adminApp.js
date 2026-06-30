@@ -14,6 +14,10 @@ function clearToken() {
   window.sessionStorage.removeItem("bigbunny-admin-token");
 }
 
+export function shouldApplyStoredTokenResult({ checkedToken, currentToken, checkId, currentCheckId }) {
+  return Boolean(checkedToken && checkedToken === currentToken && checkId === currentCheckId);
+}
+
 export async function verifyAdminPassword(password, fetchImpl = fetch) {
   if (!password) return false;
 
@@ -50,9 +54,11 @@ export function renderAdminApp(root) {
 
   const form = root.querySelector("[data-admin-login]");
   const status = root.querySelector("[data-admin-status]");
+  let authCheckId = 0;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
+    authCheckId += 1;
     const password = new FormData(form).get("password").toString();
     status.textContent = "Checking...";
 
@@ -66,19 +72,22 @@ export function renderAdminApp(root) {
     renderAdminEditor(root, token());
   });
 
-  validateStoredToken(root, status);
+  authCheckId += 1;
+  validateStoredToken(root, status, authCheckId, () => authCheckId);
 }
 
-async function validateStoredToken(root, status) {
+async function validateStoredToken(root, status, checkId, currentCheckId) {
   const storedToken = token();
   if (!storedToken) return;
 
   status.textContent = "Checking saved login...";
   if (await verifyAdminPassword(storedToken)) {
+    if (!shouldApplyStoredTokenResult({ checkedToken: storedToken, currentToken: token(), checkId, currentCheckId: currentCheckId() })) return;
     renderAdminEditor(root, storedToken);
     return;
   }
 
+  if (!shouldApplyStoredTokenResult({ checkedToken: storedToken, currentToken: token(), checkId, currentCheckId: currentCheckId() })) return;
   clearToken();
   status.textContent = "Please log in again.";
 }

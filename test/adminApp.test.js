@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isAdminRoute, verifyAdminPassword } from "../src/adminApp.js";
+import { isAdminRoute, shouldApplyStoredTokenResult, verifyAdminPassword } from "../src/adminApp.js";
 
 test("admin route is detected from /admin", () => {
   assert.equal(isAdminRoute("/admin"), true);
@@ -29,4 +29,26 @@ test("admin password verification rejects wrong or unavailable login", async () 
   assert.equal(wrong, false);
   assert.equal(unavailable, false);
   assert.equal(empty, false);
+});
+
+test("stored admin login checks do not apply after a newer auth attempt", () => {
+  assert.equal(
+    shouldApplyStoredTokenResult({
+      checkedToken: "old-token",
+      currentToken: "new-token",
+      checkId: 1,
+      currentCheckId: 2,
+    }),
+    false,
+  );
+
+  assert.equal(
+    shouldApplyStoredTokenResult({
+      checkedToken: "admin-token",
+      currentToken: "admin-token",
+      checkId: 2,
+      currentCheckId: 2,
+    }),
+    true,
+  );
 });
