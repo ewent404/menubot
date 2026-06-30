@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { isAdminRoute, shouldApplyStoredTokenResult, verifyAdminPassword } from "../src/adminApp.js";
+import { createBlankProduct, isAdminRoute, shouldApplyStoredTokenResult, verifyAdminPassword } from "../src/adminApp.js";
 
 test("admin route is detected from /admin", () => {
   assert.equal(isAdminRoute("/admin"), true);
@@ -51,4 +51,13 @@ test("stored admin login checks do not apply after a newer auth attempt", () => 
     }),
     true,
   );
+});
+
+test("blank admin product has editable size and photo rows", () => {
+  const product = createBlankProduct("tubes");
+
+  assert.equal(product.category, "tubes");
+  assert.equal(product.sizes.length, 1);
+  assert.equal(product.photos.length, 2);
+  assert.equal(product.isActive, true);
 });
