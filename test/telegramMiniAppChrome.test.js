@@ -29,6 +29,18 @@ test("telegram mini app hides duplicate local header controls", async () => {
   assert.match(cssSource, /\.telegram-mini-app \.round-button/);
 });
 
+test("customer app hydrates menu data asynchronously at startup", async () => {
+  const mainSource = await readFile("src/main.js", "utf8");
+
+  assert.match(mainSource, /import \{ getFallbackMenu, loadPublicMenu \} from "\.\/menuRepository\.js";/);
+  assert.match(mainSource, /let \{ categories, menuItems \} = getFallbackMenu\(\);/);
+  assert.match(mainSource, /async function hydrateMenu\(\)/);
+  assert.match(mainSource, /const loadedMenu = await loadPublicMenu\(\);/);
+  assert.match(mainSource, /categories = loadedMenu\.categories;/);
+  assert.match(mainSource, /menuItems = loadedMenu\.menuItems;/);
+  assert.match(mainSource, /hydrateMenu\(\);/);
+});
+
 test("telegram mini app order posts directly to the server before returning to chat", async () => {
   const mainSource = await readFile("src/main.js", "utf8");
 

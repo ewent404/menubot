@@ -1,11 +1,13 @@
 import { getArStatusMessage, resolveArAvailability } from "./arSupport.js";
 import { renderBrandLockup } from "./brand.js";
-import { categories, menuItems } from "./menuData.js";
+import { getFallbackMenu, loadPublicMenu } from "./menuRepository.js";
 import { createMiniAppOrderData, createOrderText, createTelegramOrderLink } from "./orderLink.js";
 import { previewFeatures } from "./previewConfig.js";
 import { formatMoney, formatSizeLabel, getScaleForSize } from "./sizeMath.js";
 import { isTelegramMiniApp, telegramWebApp } from "./telegramMiniApp.js";
 import "./styles.css";
+
+let { categories, menuItems } = getFallbackMenu();
 
 const state = {
   categoryId: "tubes",
@@ -688,9 +690,25 @@ function preloadImage(src, { fetchPriority = "auto" } = {}) {
   return promise;
 }
 
+async function hydrateMenu() {
+  const loadedMenu = await loadPublicMenu();
+  categories = loadedMenu.categories;
+  menuItems = loadedMenu.menuItems;
+
+  if (!menuItems.some((item) => item.id === state.itemId)) {
+    state.categoryId = categories[0]?.id ?? "tubes";
+    state.itemId = menuItems.find((item) => item.category === state.categoryId)?.id ?? menuItems[0]?.id ?? "brownie-tube";
+    state.sizeIndex = 0;
+    state.photoIndex = 0;
+  }
+
+  render();
+}
+
 bindEvents();
 preloadItemPhotos(state.itemId);
 render();
+hydrateMenu();
 preloadProductPhotos();
 
 telegramWebApp()?.ready();

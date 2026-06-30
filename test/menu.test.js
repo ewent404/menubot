@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { menuItems } from "../src/menuData.js";
+import { normalizeMenuData } from "../src/menuRepository.js";
 import { previewFeatures } from "../src/previewConfig.js";
 import { getScaleForSize, formatSizeLabel } from "../src/sizeMath.js";
 
@@ -58,4 +59,28 @@ test("3D scale grows proportionally from the smallest available size", () => {
   assert.equal(getScaleForSize(sizes, sizes[0]), 1);
   assert.equal(getScaleForSize(sizes, sizes[1]), 1.43);
   assert.equal(getScaleForSize(sizes, sizes[2]), 1.79);
+});
+
+test("customer menu can render from async API-shaped data", () => {
+  const menu = normalizeMenuData({
+    categories: [{ id: "seasonal", label: "Seasonal", isActive: true, sortOrder: 1 }],
+    products: [
+      {
+        id: "new-cookie",
+        category: "seasonal",
+        name: "New Cookie",
+        description: "Fresh item.",
+        shape: "cookie",
+        color: "#8a3f2a",
+        accent: "#f8dcc4",
+        isActive: true,
+        sortOrder: 1,
+        photos: [{ src: "./products/chocolate-cookie.webp", alt: "New cookie", sortOrder: 1 }],
+        sizes: [{ label: "1 pc", diameterCm: 7, heightCm: 1.2, price: 0.75, sortOrder: 1 }],
+      },
+    ],
+  });
+
+  assert.equal(menu.categories[0].label, "Seasonal");
+  assert.equal(menu.menuItems[0].name, "New Cookie");
 });
