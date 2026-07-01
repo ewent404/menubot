@@ -162,14 +162,14 @@ export async function renderAdminEditor(root, adminToken) {
       const response = await fetch("/api/admin/menu", {
         headers: { authorization: `Bearer ${adminToken}` },
       });
-      if (!response.ok) throw new Error("Menu load failed");
       const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Menu load failed");
       menu = payload.menu ?? { categories: [], products: [] };
       selectedProductId = products()[0]?.id ?? "";
       render();
-    } catch {
+    } catch (error) {
       const status = root.querySelector(".admin-status");
-      if (status) status.textContent = "Could not load menu.";
+      if (status) status.textContent = error.message || "Could not load menu.";
     }
   };
 

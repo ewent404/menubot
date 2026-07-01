@@ -66,6 +66,31 @@ test("admin menu uses fallback storage when Supabase is not configured", async (
   assert.ok(response.body.menu.products.length > 0);
 });
 
+test("admin menu returns a setup error when Supabase load fails", async () => {
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  process.env.ADMIN_PASSWORD = "secret-admin";
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 404,
+    text: async () => JSON.stringify({ message: "relation categories does not exist" }),
+  });
+  const response = createResponse();
+
+  try {
+    await menuHandler({ method: "GET", headers: { authorization: "Bearer secret-admin" }, body: {} }, response);
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  }
+
+  assert.equal(response.statusCode, 500);
+  assert.equal(response.body.ok, false);
+  assert.match(response.body.error, /Supabase menu storage is not ready/);
+});
+
 test("admin menu accepts valid save payload", async () => {
   delete process.env.SUPABASE_URL;
   delete process.env.SUPABASE_SERVICE_ROLE_KEY;
