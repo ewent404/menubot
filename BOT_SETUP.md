@@ -57,3 +57,21 @@ For the two-bot flow:
 4. Set `OWNER_CHAT_ID` to the Bigbunny Order group/channel id.
 
 For production, regenerate the bot token in BotFather before adding it to Vercel.
+
+## Admin Menu Tool
+
+Set these Vercel environment variables:
+
+- `ADMIN_PASSWORD`
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+Open the admin panel at:
+
+`https://menubot-nu.vercel.app/admin`
+
+The first image editor version accepts existing product image paths such as `./products/brownie-tube.webp` or full image URLs.
+
+Create the Supabase tables by running:
+
+`docs/supabase-admin-schema.sql`
