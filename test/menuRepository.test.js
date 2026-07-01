@@ -144,6 +144,24 @@ test("loads Supabase admin rows and merges product sizes and photos", async () =
   }
 });
 
+test("loads fallback admin menu when Supabase tables are empty", async () => {
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => [] });
+
+  try {
+    const menu = await loadAdminMenu();
+
+    assert.ok(menu.categories.length >= 3);
+    assert.ok(menu.products.some((product) => product.id === "brownie-tube"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  }
+});
+
 test("saves Supabase admin menu rows with upserts and without deletes", async () => {
   process.env.SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";

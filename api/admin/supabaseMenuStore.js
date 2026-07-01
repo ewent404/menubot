@@ -204,6 +204,10 @@ export async function loadAdminMenu() {
     supabaseFetch("product_photos?select=*&order=sort_order.asc"),
   ]);
 
+  if ((categories ?? []).length === 0 && (products ?? []).length === 0) {
+    return fallbackAdminMenu();
+  }
+
   return adminMenuFromRows(categories ?? [], products ?? [], sizes ?? [], photos ?? []);
 }
 
