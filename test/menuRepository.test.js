@@ -209,6 +209,48 @@ test("saves Supabase admin menu rows with upserts and without deletes", async ()
   }
 });
 
+test("skips Supabase upserts for empty child row sets", async () => {
+  process.env.SUPABASE_URL = "https://example.supabase.co";
+  process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";
+  const originalFetch = globalThis.fetch;
+  const requests = [];
+  globalThis.fetch = async (url, options) => {
+    requests.push({ url, options, body: JSON.parse(options.body) });
+    return { ok: true, status: 201, json: async () => [] };
+  };
+
+  try {
+    await saveAdminMenu({
+      categories: [{ id: "cakes", label: "Cakes", sortOrder: 1, isActive: true }],
+      products: [
+        {
+          id: "mini-cake",
+          category: "cakes",
+          name: "Mini Cake",
+          description: "Small cake.",
+          shape: "box",
+          color: "#aa7744",
+          accent: "#442211",
+          photoAlt: "Mini cake",
+          sortOrder: 1,
+          isActive: true,
+          sizes: [],
+          photos: [],
+        },
+      ],
+    });
+
+    assert.deepEqual(
+      requests.map((request) => String(request.url).replace("https://example.supabase.co/rest/v1/", "")),
+      ["categories", "products"],
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+    delete process.env.SUPABASE_URL;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+  }
+});
+
 test("public menu API falls back to static menu when Supabase loading fails", async () => {
   process.env.SUPABASE_URL = "https://example.supabase.co";
   process.env.SUPABASE_SERVICE_ROLE_KEY = "service-key";

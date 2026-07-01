@@ -183,6 +183,8 @@ function adminMenuFromInput(menu) {
 }
 
 async function upsertRows(table, rows) {
+  if (rows.length === 0) return null;
+
   return supabaseFetch(table, {
     method: "POST",
     headers: { Prefer: "resolution=merge-duplicates" },
